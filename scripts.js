@@ -2,6 +2,10 @@
 const canvas = document.getElementById('simulationCanvas');
 const ctx = canvas.getContext('2d');
 
+const DESIGN_WIDTH = 800;  // Lățimea originală a animației
+const DESIGN_HEIGHT = 600; // Înălțimea originală a animației
+const ASPECT_RATIO = DESIGN_WIDTH / DESIGN_HEIGHT;
+
 let currentAngle = 0;
 let targetAngle = 0;
 let isBeamOn = false;
@@ -739,23 +743,40 @@ function drawDoseDistribution() {
     ctx.drawImage(currentDoseCanvas, 0, 0);
 }
 
+function resizeCanvas() {
+    const container = document.querySelector('.canvas-container');
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    const containerAspectRatio = containerWidth / containerHeight;
+
+    let canvasWidth, canvasHeight;
+
+    if (containerAspectRatio > ASPECT_RATIO) {
+        // Container-ul este mai lat decât aspectul animației
+        canvasHeight = containerHeight;
+        canvasWidth = canvasHeight * ASPECT_RATIO;
+    } else {
+        // Container-ul este mai înalt decât aspectul animației
+        canvasWidth = containerWidth;
+        canvasHeight = canvasWidth / ASPECT_RATIO;
+    }
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    // Actualizăm stilurile CSS pentru centrare
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
+    scaleScene();
+}
+
 function scaleScene() {
-    const sceneWidth = 800;
-    const sceneHeight = 600;
-    
-    const scaleX = canvas.width / sceneWidth;
-    const scaleY = canvas.height / sceneHeight;
+    const scaleX = canvas.width / DESIGN_WIDTH;
+    const scaleY = canvas.height / DESIGN_HEIGHT;
     const scale = Math.min(scaleX, scaleY);
 
-    const scaledWidth = sceneWidth * scale;
-    const scaledHeight = sceneHeight * scale;
-
-    const offsetX = (canvas.width - scaledWidth) / 2;
-    const offsetY = (canvas.height - scaledHeight) / 2;
-
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
     drawAnatomy();
     if (showDoseDistribution) {
@@ -765,13 +786,10 @@ function scaleScene() {
     if (isBeamOn) {
         drawBeam(currentAngle);
     }
-
-    ctx.restore();
 }
 
 function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    scaleScene();
+    resizeCanvas();  // Aceasta va redesena întreaga scenă
     updateInfo();
     requestAnimationFrame(animate);
 }
@@ -1085,12 +1103,30 @@ function loadSimulationState() {
     }
 }
 
-// Funcție pentru gestionarea redimensionării canvasului
-function resizeCanvas() {
-    const container = document.querySelector('.canvas-container');
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-    scaleScene();
+// Gestionarea evenimentelor tactile pentru dispozitive mobile
+canvas.addEventListener('touchstart', handleTouchStart, false);
+canvas.addEventListener('touchmove', handleTouchMove, false);
+canvas.addEventListener('touchend', handleTouchEnd, false);
+
+function handleTouchStart(event) {
+    // Convertim coordonatele tactile la coordonatele canvas-ului
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const touch = event.touches[0];
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+
+    // Folosim x și y pentru logica de interacțiune
+    // ...
+}
+
+function handleTouchMove(event) {
+    // Implementare similară cu handleTouchStart
+}
+
+function handleTouchEnd(event) {
+    // Implementare similară cu handleTouchStart
 }
 
 // Funcție pentru gestionarea panoului de control glisant
