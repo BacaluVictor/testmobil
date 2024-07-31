@@ -5,7 +5,6 @@
     --text-color: #34495e;
     --panel-background: #ffffff;
     --border-color: #bdc3c7;
-    --menu-width: 300px;
 }
 
 body {
@@ -16,97 +15,25 @@ body {
     margin: 0;
     padding: 0;
     font-size: 14px;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
-.menu-toggle {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-}
-
-#menuToggle {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    font-size: 20px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.off-canvas-menu {
-    position: fixed;
-    top: 0;
-    left: -var(--menu-width);
-    width: var(--menu-width);
-    height: 100%;
-    background-color: var(--panel-background);
-    transition: left 0.3s ease;
-    overflow-y: auto;
-    z-index: 1001;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.off-canvas-menu.open {
-    left: 0;
-}
-
-.menu-header {
+.app-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.menu-header h2 {
-    margin: 0;
-}
-
-#closeMenu {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-.menu-content {
-    padding: 20px;
-}
-
-.main-content {
-    transition: margin-left 0.3s ease;
-}
-
-.main-content.menu-open {
-    margin-left: var(--menu-width);
-}
-
-header {
-    text-align: center;
-    padding: 10px;
-}
-
-h1 {
-    color: var(--primary-color);
-    font-size: 1.5em;
-    margin: 0;
+    height: 100vh;
 }
 
 .content {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.canvas-container {
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: calc(100vh - 100px);
-}
-
-.simulation-area {
-    max-width: 100%;
-    max-height: 100%;
 }
 
 #simulationCanvas {
@@ -116,15 +43,94 @@ h1 {
 }
 
 .control-panel {
+    width: 300px;
+    height: 100vh;
+    background-color: var(--panel-background);
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    position: relative;
+    overflow-y: auto;
+}
+
+.control-panel.collapsed {
+    transform: translateX(calc(100% - 20px));
+}
+
+.panel-toggle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 60px;
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.panel-toggle:hover {
+    background-color: #2980b9;
+}
+
+.toggle-icon {
+    position: relative;
+    width: 12px;
+    height: 12px;
+}
+
+.toggle-icon::before,
+.toggle-icon::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 2px;
+    background-color: white;
+    left: 2px;
+    transition: transform 0.3s ease;
+}
+
+.toggle-icon::before {
+    top: 4px;
+    transform: rotate(-45deg);
+}
+
+.toggle-icon::after {
+    bottom: 4px;
+    transform: rotate(45deg);
+}
+
+.control-panel.collapsed .toggle-icon::before {
+    transform: rotate(45deg);
+}
+
+.control-panel.collapsed .toggle-icon::after {
+    transform: rotate(-45deg);
+}
+
+.panel-content {
+    padding: 20px;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 1.5em;
+    margin-bottom: 20px;
 }
 
 .panel-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-section:last-child {
+    border-bottom: none;
 }
 
 .beam-controls {
@@ -135,8 +141,6 @@ h1 {
 
 .slider-container.compact {
     flex: 1;
-    display: flex;
-    flex-direction: column;
 }
 
 .slider-container.compact label {
@@ -152,9 +156,13 @@ input[type="range"] {
 
 .technique-section, .tumor-shape-section {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
+}
+
+.technique-section label, .tumor-shape-section label {
+    margin-bottom: 5px;
 }
 
 .btn {
@@ -164,12 +172,19 @@ input[type="range"] {
     padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
     font-size: 0.9em;
 }
 
 .btn:hover {
     background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn.primary {
@@ -241,22 +256,32 @@ input:checked + .slider:before {
     border: 1px solid var(--border-color);
     background-color: white;
     color: var(--text-color);
+    width: 100%;
+    transition: all 0.2s ease-in-out;
+}
+
+.select:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .info-panel {
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
 .info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 15px;
 }
 
 .info-item {
     display: flex;
     align-items: center;
     font-size: 0.9em;
+    padding: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
 .value {
@@ -265,14 +290,14 @@ input:checked + .slider:before {
 }
 
 .treatment-stats {
-    margin-top: 15px;
+    margin-top: 25px;
     background-color: #f0f0f0;
     padding: 10px;
     border-radius: 5px;
 }
 
 .stat-item {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .stat-item label {
@@ -309,103 +334,219 @@ input:checked + .slider:before {
 }
 
 .collapsible-info-panel {
-    margin-top: 20px;
-}
-
-.info-panel {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    overflow: hidden;
-}
-
-.info-header {
-    background-color: #f1f1f1;
-    padding: 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.info-content {
-    padding: 0 10px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.2s ease-out;
-}
-
-.info-content.active {
-    max-height: 500px;
-    padding: 10px;
-}
-
-.toggle-icon::after {
-    content: '\25BC';
-}
-
-.info-header.active .toggle-icon::after {
-    content: '\25B2';
-}
-
-footer {
-    text-align: center;
-    padding: 10px;
-    font-size: 0.8em;
-    color: #777;
-}
-
-@media (max-width: 768px) {
-    :root {
-        --menu-width: 100%;
+        margin-top: 30px;
     }
 
-    .main-content.menu-open {
-        margin-left: 0;
+    .info-panel {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        overflow: hidden;
     }
 
-    .off-canvas-menu {
-        width: 100%;
+    .info-header {
+        background-color: #f1f1f1;
+        padding: 12px 10px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease-in-out;
     }
 
-    .panel-section, .beam-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .switch-container {
-        margin-top: 10px;
-    }
-    
-    .technique-section, .tumor-shape-section {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .info-grid {
-        grid-template-columns: 1fr;
+    .info-header:hover {
+        background-color: #e0e0e0;
     }
 
-    .btn, .select {
-        font-size: 16px;
-        padding: 10px;
-        width: 100%;
+    .info-content {
+        padding: 0 10px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
     }
 
-    input[type="range"] {
-        height: 30px;
+    .info-content.active {
+        max-height: 500px;
+        padding: 15px 10px;
     }
-}
 
-.highlight {
-    animation: highlight 0.3s ease-in-out;
-}
+    .toggle-icon::after {
+        content: '\25BC';
+        font-size: 0.8em;
+        transition: transform 0.2s ease;
+    }
 
-@keyframes highlight {
-    0% {
-        background-color: rgba(46, 204, 113, 0.2);
+    .info-header.active .toggle-icon::after {
+        content: '\25B2';
     }
-    100% {
-        background-color: transparent;
+
+    .highlight {
+        animation: highlight 0.3s ease-in-out;
     }
-}
+
+    @keyframes highlight {
+        0% {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+        100% {
+            background-color: transparent;
+        }
+    }
+
+    /* Stiluri pentru scroll personalizat în panoul de control */
+    .control-panel {
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) var(--panel-background);
+    }
+
+    .control-panel::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .control-panel::-webkit-scrollbar-track {
+        background: var(--panel-background);
+    }
+
+    .control-panel::-webkit-scrollbar-thumb {
+        background-color: var(--primary-color);
+        border-radius: 4px;
+        border: 2px solid var(--panel-background);
+    }
+
+    /* Animație pentru tranziția panoului de control */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(100%);
+        }
+    }
+
+    .control-panel.slide-in {
+        animation: slideIn 0.3s forwards;
+    }
+
+    .control-panel.slide-out {
+        animation: slideOut 0.3s forwards;
+    }
+
+    /* Media queries pentru responsivitate */
+    @media (max-width: 768px) {
+        .app-container {
+            flex-direction: column;
+        }
+
+        .control-panel {
+            width: 100%;
+            height: 50vh;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            transform: translateY(0);
+        }
+
+        .control-panel.collapsed {
+            transform: translateY(calc(100% - 20px));
+        }
+
+        .panel-toggle {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+        }
+
+        .toggle-icon::before,
+        .toggle-icon::after {
+            width: 2px;
+            height: 8px;
+            top: 2px;
+        }
+
+        .toggle-icon::before {
+            left: 4px;
+            transform: rotate(-45deg);
+        }
+
+        .toggle-icon::after {
+            right: 4px;
+            transform: rotate(45deg);
+        }
+
+        .control-panel.collapsed .toggle-icon::before {
+            transform: rotate(45deg);
+        }
+
+        .control-panel.collapsed .toggle-icon::after {
+            transform: rotate(-45deg);
+        }
+
+        .canvas-container {
+            height: calc(100vh - 20px);
+        }
+
+        .panel-content {
+            padding: 10px;
+        }
+
+        h1 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .panel-section {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .beam-controls {
+            flex-direction: column;
+        }
+
+        .slider-container.compact {
+            margin-bottom: 10px;
+        }
+
+        .technique-section, .tumor-shape-section {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .select {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .btn, .select {
+            font-size: 16px;
+            padding: 10px;
+        }
+
+        input[type="range"] {
+            height: 30px;
+        }
+
+        .info-item, .stat-item label {
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            margin-bottom: 10px;
+        }
+    }
