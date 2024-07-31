@@ -7,16 +7,18 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="menu-toggle">
-        <button id="menuToggle">☰</button>
-    </div>
-    <div class="off-canvas-menu">
-        <div class="menu-header">
-            <h2>Controale Simulare</h2>
-            <button id="closeMenu">×</button>
-        </div>
-        <div class="menu-content">
-            <div class="control-panel">
+    <div class="app-container">
+        <main class="content">
+            <div class="canvas-container">
+                <canvas id="simulationCanvas"></canvas>
+            </div>
+        </main>
+        <aside class="control-panel" id="controlPanel">
+            <button class="panel-toggle" id="panelToggle" aria-label="Toggle control panel">
+                <span class="toggle-icon"></span>
+            </button>
+            <div class="panel-content">
+                <h1>Simulare Tehnici de Radioterapie</h1>
                 <div class="panel-section">
                     <button id="treatmentControl" class="btn primary">Start Tratament</button>
                     <div class="switch-container">
@@ -97,35 +99,24 @@
                             <span>Date Clinice</span>
                             <span class="toggle-icon"></span>
                         </div>
-                        <div class="info-content" id="clinicalDataContent"></div>
+                        <div class="info-content" id="clinicalDataContent">
+                        </div>
                     </div>
                     <div class="info-panel">
                         <div class="info-header">
                             <span>Date Tehnice</span>
                             <span class="toggle-icon"></span>
                         </div>
-                        <div class="info-content" id="technicalDataContent"></div>
+                        <div class="info-content" id="technicalDataContent">
+                        </div>
                     </div>
                 </div>
                 <div class="panel-section">
-                    <button id="saveButton" class="btn">Salvează Starea</button>
-                    <button id="loadButton" class="btn">Încarcă Starea</button>
+                    <button id="saveStateBtn" class="btn">Salvează Starea</button>
+                    <button id="loadStateBtn" class="btn">Încarcă Starea</button>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="main-content">
-        <header>
-            <h1>Simulare Tehnici de Radioterapie</h1>
-        </header>
-        <main class="content">
-            <section class="simulation-area">
-                <canvas id="simulationCanvas"></canvas>
-            </section>
-        </main>
-        <footer>
-            <p>Creat de Dr. Bacalu Victor</p>
-        </footer>
+        </aside>
     </div>
     <script src="scripts.js"></script>
 </body>
