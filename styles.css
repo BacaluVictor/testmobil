@@ -184,11 +184,6 @@ button:hover {
     cursor: pointer;
 }
 
-.slider-value {
-    font-weight: bold;
-    margin-left: 10px;
-}
-
 .mlc-panel {
     display: none;
     margin-top: 10px;
@@ -250,9 +245,11 @@ button:hover {
 @media (max-width: 767px) {
     .simulation-container {
         width: 100%;
-        position: static;
+        position: sticky;
+        top: 0;
     }
     .controls {
         width: 100%;
+        margin-top: 20px;
     }
 }
