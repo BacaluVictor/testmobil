@@ -1,212 +1,55 @@
-:root {
-    --primary-color: #3498db;
-    --secondary-color: #2ecc71;
-    --background-color: #ecf0f1;
-    --text-color: #34495e;
-    --panel-background: #ffffff;
-    --border-color: #bdc3c7;
-}
-
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    line-height: 1.6;
+body, html {
     margin: 0;
     padding: 0;
-    font-size: 14px;
-    overflow: hidden;
+    font-family: Arial, sans-serif;
+    height: 100%;
 }
 
-.app-container {
-    display: flex;
-    height: 100vh;
+.header {
+    background-color: #3498db;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
 }
 
 .content {
-    flex-grow: 1;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-.canvas-container {
+.simulation-container {
     width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+    background-color: white;
+    padding: 10px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 50px; /* Ajustați această valoare în funcție de înălțimea header-ului */
+    z-index: 1000;
 }
 
 #simulationCanvas {
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
     object-fit: contain;
 }
 
-.control-panel {
-    width: 300px;
-    height: 100vh;
-    background-color: var(--panel-background);
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-    position: relative;
-    overflow-y: auto;
-}
-
-.control-panel.collapsed {
-    transform: translateX(calc(100% - 20px));
-}
-
-.panel-toggle {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 60px;
-    background-color: var(--primary-color);
-    border: none;
-    color: white;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
-}
-
-.panel-toggle:hover {
-    background-color: #2980b9;
-}
-
-.toggle-icon {
-    position: relative;
-    width: 12px;
-    height: 12px;
-}
-
-.toggle-icon::before,
-.toggle-icon::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 2px;
-    background-color: white;
-    left: 2px;
-    transition: transform 0.3s ease;
-}
-
-.toggle-icon::before {
-    top: 4px;
-    transform: rotate(-45deg);
-}
-
-.toggle-icon::after {
-    bottom: 4px;
-    transform: rotate(45deg);
-}
-
-.control-panel.collapsed .toggle-icon::before {
-    transform: rotate(45deg);
-}
-
-.control-panel.collapsed .toggle-icon::after {
-    transform: rotate(-45deg);
-}
-
-.panel-content {
+.controls {
     padding: 20px;
 }
 
-h1 {
-    color: var(--primary-color);
-    font-size: 1.5em;
-    margin-bottom: 20px;
-}
-
-.panel-section {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.panel-section:last-child {
-    border-bottom: none;
-}
-
-.beam-controls {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.slider-container.compact {
-    flex: 1;
-}
-
-.slider-container.compact label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-}
-
-input[type="range"] {
-    width: 100%;
-}
-
-.technique-section, .tumor-shape-section {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.technique-section label, .tumor-shape-section label {
-    margin-bottom: 5px;
-}
-
-.btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9em;
-}
-
-.btn:hover {
-    background-color: #2980b9;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.btn:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.btn.primary {
-    background-color: var(--secondary-color);
-}
-
-.btn.primary:hover {
-    background-color: #27ae60;
-}
-
-.switch-container {
-    display: flex;
-    align-items: center;
+.switch-container, .slider-container, .technique-section, .tumor-shape-section {
+    margin-bottom: 15px;
 }
 
 .switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 24px;
-    margin-right: 10px;
+    width: 60px;
+    height: 34px;
 }
 
 .switch input {
@@ -215,7 +58,7 @@ input[type="range"] {
     height: 0;
 }
 
-.switch .slider {
+.slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -227,11 +70,11 @@ input[type="range"] {
     border-radius: 34px;
 }
 
-.switch .slider:before {
+.slider:before {
     position: absolute;
     content: "";
-    height: 16px;
-    width: 16px;
+    height: 26px;
+    width: 26px;
     left: 4px;
     bottom: 4px;
     background-color: white;
@@ -240,90 +83,109 @@ input[type="range"] {
 }
 
 input:checked + .slider {
-    background-color: var(--secondary-color);
+    background-color: #2196F3;
 }
 
 input:checked + .slider:before {
     transform: translateX(26px);
 }
 
-.label-text {
-    font-size: 0.9em;
-}
-
-.select {
-    padding: 5px;
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-    background-color: white;
-    color: var(--text-color);
+.select, button {
     width: 100%;
-    transition: all 0.2s ease-in-out;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
-.select:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
 
-.info-panel {
-    margin-top: 20px;
+button:hover {
+    background-color: #2980b9;
+}
+
+.info-panel, .treatment-stats {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 15px;
 }
 
 .info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-}
-
-.info-item {
-    display: flex;
-    align-items: center;
-    font-size: 0.9em;
-    padding: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.value {
-    font-weight: bold;
-    margin-left: auto;
-}
-
-.treatment-stats {
-    margin-top: 25px;
-    background-color: #f0f0f0;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-.stat-item {
-    margin-bottom: 15px;
-}
-
-.stat-item label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    gap: 10px;
 }
 
 .progress-bar {
     width: 100%;
-    height: 20px;
     background-color: #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 5px;
+    margin-top: 5px;
 }
 
 .progress-bar .progress {
-    height: 100%;
-    background-color: var(--primary-color);
-    transition: width 0.3s ease;
+    height: 20px;
+    background-color: #3498db;
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out;
 }
 
-#treatmentTime, #marginValue, #fractionsValue {
+.slider-container {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.slider-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.slider-container input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 10px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+
+.slider-container input[type="range"]:hover {
+    opacity: 1;
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3498db;
+    cursor: pointer;
+}
+
+.slider-container input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3498db;
+    cursor: pointer;
+}
+
+.slider-value {
     font-weight: bold;
-    color: var(--primary-color);
+    margin-left: 10px;
 }
 
 .mlc-panel {
@@ -334,220 +196,61 @@ input:checked + .slider:before {
     border-radius: 5px;
 }
 
-.collapsible-info-panel {
-    margin-top: 30px;
+.highlight {
+    animation: highlight 0.3s ease-in-out;
 }
 
-.info-panel {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    overflow: hidden;
+@keyframes highlight {
+    0% { background-color: rgba(46, 204, 113, 0.2); }
+    100% { background-color: transparent; }
 }
 
-.info-header {
+.collapsible-info-panel .info-header {
     background-color: #f1f1f1;
-    padding: 12px 10px;
+    padding: 10px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.2s ease-in-out;
 }
 
-.info-header:hover {
-    background-color: #e0e0e0;
-}
-
-.info-content {
+.collapsible-info-panel .info-content {
     padding: 0 10px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.2s ease-out;
 }
 
-.info-content.active {
+.collapsible-info-panel .info-content.active {
     max-height: 500px;
-    padding: 15px 10px;
+    padding: 10px;
 }
 
 .toggle-icon::after {
     content: '\25BC';
-    font-size: 0.8em;
-    transition: transform 0.2s ease;
 }
 
 .info-header.active .toggle-icon::after {
     content: '\25B2';
 }
 
-.highlight {
-    animation: highlight 0.3s ease-in-out;
-}
-
-@keyframes highlight {
-    0% {
-        background-color: rgba(46, 204, 113, 0.2);
-    }
-    100% {
-        background-color: transparent;
-    }
-}
-
-/* Stiluri pentru scroll personalizat în panoul de control */
-.control-panel {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-color) var(--panel-background);
-}
-
-.control-panel::-webkit-scrollbar {
-    width: 8px;
-}
-
-.control-panel::-webkit-scrollbar-track {
-    background: var(--panel-background);
-}
-
-.control-panel::-webkit-scrollbar-thumb {
-    background-color: var(--primary-color);
-    border-radius: 4px;
-    border: 2px solid var(--panel-background);
-}
-
-/* Animație pentru tranziția panoului de control */
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-    }
-    to {
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideOut {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(100%);
-    }
-}
-
-.control-panel.slide-in {
-    animation: slideIn 0.3s forwards;
-}
-
-.control-panel.slide-out {
-    animation: slideOut 0.3s forwards;
-}
-
-/* Media queries pentru responsivitate */
-@media (max-width: 768px) {
-    .app-container {
-        flex-direction: column;
-    }
-
+@media (min-width: 768px) {
     .content {
-        height: 50vh;
+        flex-direction: row;
     }
+    .simulation-container {
+        width: 70%;
+    }
+    .controls {
+        width: 30%;
+    }
+}
 
-    .control-panel {
+@media (max-width: 767px) {
+    .simulation-container {
         width: 100%;
-        height: 50vh;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        transform: translateY(0);
     }
-
-    .control-panel.collapsed {
-        transform: translateY(calc(100% - 20px));
-    }
-
-    .panel-toggle {
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 20px;
-    }
-
-    .toggle-icon::before,
-    .toggle-icon::after {
-        width: 2px;
-        height: 8px;
-        top: 2px;
-    }
-
-    .toggle-icon::before {
-        left: 4px;
-        transform: rotate(-45deg);
-    }
-
-    .toggle-icon::after {
-        right: 4px;
-        transform: rotate(45deg);
-    }
-
-    .control-panel.collapsed .toggle-icon::before {
-        transform: rotate(45deg);
-    }
-
-    .control-panel.collapsed .toggle-icon::after {
-        transform: rotate(-45deg);
-    }
-
-    .panel-content {
-        padding: 10px;
-    }
-
-    h1 {
-        font-size: 1.2em;
-        margin-bottom: 10px;
-    }
-
-    .panel-section {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-    }
-
-    .beam-controls {
-        flex-direction: column;
-    }
-
-    .slider-container.compact {
-        margin-bottom: 10px;
-    }
-
-    .technique-section, .tumor-shape-section {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .select {
+    .controls {
         width: 100%;
-        margin-top: 5px;
-    }
-
-    .info-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .btn, .select {
-        font-size: 16px;
-        padding: 10px;
-    }
-
-    input[type="range"] {
-        height: 30px;
-    }
-
-    .info-item, .stat-item label {
-        font-size: 0.9em;
-    }
-
-    .stat-item {
-        margin-bottom: 10px;
     }
 }
