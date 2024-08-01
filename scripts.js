@@ -2,10 +2,6 @@
 const canvas = document.getElementById('simulationCanvas');
 const ctx = canvas.getContext('2d');
 
-const DESIGN_WIDTH = 800;  // Lățimea originală a animației
-const DESIGN_HEIGHT = 600; // Înălțimea originală a animației
-const ASPECT_RATIO = DESIGN_WIDTH / DESIGN_HEIGHT;
-
 let currentAngle = 0;
 let targetAngle = 0;
 let isBeamOn = false;
@@ -64,7 +60,7 @@ const treatmentTechniques = {
         fractions: 30
     },
     'VMAT': {
-        fields: Array.from({ length: 360 }, (_, i) => i),
+        fields: Array.from({length: 360}, (_, i) => i),
         beamShape: 'modulated',
         margin: 3,
         precision: 85,
@@ -74,7 +70,7 @@ const treatmentTechniques = {
         fractions: 30
     },
     'SRS': {
-        fields: Array.from({ length: 36 }, (_, i) => i * 10),
+        fields: Array.from({length: 36}, (_, i) => i * 10),
         beamShape: 'convergent',
         margin: 1,
         precision: 95,
@@ -84,7 +80,7 @@ const treatmentTechniques = {
         fractions: 1
     },
     'SBRT': {
-        fields: Array.from({ length: 36 }, (_, i) => i * 10),
+        fields: Array.from({length: 36}, (_, i) => i * 10),
         beamShape: 'convergent',
         margin: 2,
         precision: 95,
@@ -616,40 +612,40 @@ function updateDoseDistribution() {
     }
     if (!currentDoseCanvas) {
         currentDoseCanvas = document.createElement('canvas');
-        currentDoseCanvas.width = canvas.width;
-        currentDoseCanvas.height = canvas.height;
+        currentDoseCanvas.width = 800;
+        currentDoseCanvas.height = 600;
     }
     const tempCtx = currentDoseCanvas.getContext('2d');
-    tempCtx.clearRect(0, 0, canvas.width, canvas.height);
+    tempCtx.clearRect(0, 0, 800, 600);
     tempCtx.globalAlpha = accumulatedDose / 100;
-    tempCtx.drawImage(doseDistributionCanvas, 0, 0, canvas.width, canvas.height);
+    tempCtx.drawImage(doseDistributionCanvas, 0, 0);
 }
 
 function createDoseDistributionImage() {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    const ctx = canvas.getContext('2d');
     const tumorPosition = getTumorPosition();
     const tumorRadius = getTumorRadius();
     const maxRadius = tumorRadius * 4;
 
-    for (let x = 0; x < tempCanvas.width; x++) {
-        for (let y = 0; y < tempCanvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+        for (let y = 0; y < canvas.height; y++) {
             const dx = x - tumorPosition.x;
             const dy = y - tumorPosition.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             if (distance <= maxRadius) {
                 let dose = calculateDose(x, y, distance, treatmentTechnique, tumorRadius);
-                tempCtx.fillStyle = getColorForDose(dose);
-                tempCtx.fillRect(x, y, 1, 1);
+                ctx.fillStyle = getColorForDose(dose);
+                ctx.fillRect(x, y, 1, 1);
             }
         }
     }
 
-    drawIsodoseLines(tempCtx, tumorPosition, tumorRadius, maxRadius);
+    drawIsodoseLines(ctx, tumorPosition, tumorRadius, maxRadius);
 
-    return tempCanvas;
+    return canvas;
 }
 
 function drawIsodoseLines(ctx, tumorPosition, tumorRadius, maxRadius) {
@@ -743,40 +739,23 @@ function drawDoseDistribution() {
     ctx.drawImage(currentDoseCanvas, 0, 0);
 }
 
-function resizeCanvas() {
-    const container = document.querySelector('.canvas-container');
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-    const containerAspectRatio = containerWidth / containerHeight;
-
-    let canvasWidth, canvasHeight;
-
-    if (containerAspectRatio > ASPECT_RATIO) {
-        // Container-ul este mai lat decât aspectul animației
-        canvasHeight = containerHeight;
-        canvasWidth = canvasHeight * ASPECT_RATIO;
-    } else {
-        // Container-ul este mai înalt decât aspectul animației
-        canvasWidth = containerWidth;
-        canvasHeight = canvasWidth / ASPECT_RATIO;
-    }
-
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    // Actualizăm stilurile CSS pentru centrare
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
-
-    scaleScene();
-}
-
 function scaleScene() {
-    const scaleX = canvas.width / DESIGN_WIDTH;
-    const scaleY = canvas.height / DESIGN_HEIGHT;
+    const sceneWidth = 800;
+    const sceneHeight = 600;
+    
+    const scaleX = canvas.width / sceneWidth;
+    const scaleY = canvas.height / sceneHeight;
     const scale = Math.min(scaleX, scaleY);
 
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    const scaledWidth = sceneWidth * scale;
+    const scaledHeight = sceneHeight * scale;
+
+    const offsetX = (canvas.width - scaledWidth) / 2;
+    const offsetY = (canvas.height - scaledHeight) / 2;
+
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
 
     drawAnatomy();
     if (showDoseDistribution) {
@@ -786,10 +765,13 @@ function scaleScene() {
     if (isBeamOn) {
         drawBeam(currentAngle);
     }
+
+    ctx.restore();
 }
 
 function animate() {
-    resizeCanvas();  // Aceasta va redesena întreaga scenă
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    scaleScene();
     updateInfo();
     requestAnimationFrame(animate);
 }
@@ -1043,108 +1025,8 @@ function toggleInfo(header) {
     }
 }
 
-// Funcție pentru a rezeta simularea
-function resetSimulation() {
-    isSimulating = false;
-    treatmentPaused = false;
-    isBeamOn = false;
-    currentAngle = 0;
-    accumulatedDose = 0;
-    fractionNumber = 0;
-    currentField = '-';
-    currentDoseCanvas = null;
-    doseDistributionCanvas = null;
-
-    updateUIState();
-    updateInfo();
-    drawAnatomy();
-}
-
-// Funcție pentru salvarea stării simulării
-function saveSimulationState() {
-    const state = {
-        treatmentTechnique,
-        currentAngle,
-        accumulatedDose,
-        fractionNumber,
-        isSimulating,
-        isBeamOn,
-        showDoseDistribution,
-        beamEnergy,
-        beamWidth,
-        tumorShape
-    };
-    localStorage.setItem('radiotherapySimulationState', JSON.stringify(state));
-    console.log('Starea simulării a fost salvată');
-}
-
-// Funcție pentru încărcarea stării simulării
-function loadSimulationState() {
-    const savedState = localStorage.getItem('radiotherapySimulationState');
-    if (savedState) {
-        const state = JSON.parse(savedState);
-        treatmentTechnique = state.treatmentTechnique;
-        currentAngle = state.currentAngle;
-        accumulatedDose = state.accumulatedDose;
-        fractionNumber = state.fractionNumber;
-        isSimulating = state.isSimulating;
-        isBeamOn = state.isBeamOn;
-        showDoseDistribution = state.showDoseDistribution;
-        beamEnergy = state.beamEnergy;
-        beamWidth = state.beamWidth;
-        tumorShape = state.tumorShape;
-
-        updateUIState();
-        updateInfo();
-        drawAnatomy();
-        console.log('Starea simulării a fost încărcată');
-    } else {
-        console.log('Nu s-a găsit nicio stare salvată a simulării');
-    }
-}
-
-// Gestionarea evenimentelor tactile pentru dispozitive mobile
-canvas.addEventListener('touchstart', handleTouchStart, false);
-canvas.addEventListener('touchmove', handleTouchMove, false);
-canvas.addEventListener('touchend', handleTouchEnd, false);
-
-function handleTouchStart(event) {
-    // Convertim coordonatele tactile la coordonatele canvas-ului
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const touch = event.touches[0];
-    const x = (touch.clientX - rect.left) * scaleX;
-    const y = (touch.clientY - rect.top) * scaleY;
-
-    // Folosim x și y pentru logica de interacțiune
-    // ...
-}
-
-function handleTouchMove(event) {
-    // Implementare similară cu handleTouchStart
-}
-
-function handleTouchEnd(event) {
-    // Implementare similară cu handleTouchStart
-}
-
-// Funcție pentru gestionarea panoului de control glisant
-function toggleControlPanel() {
-    const controlPanel = document.getElementById('controlPanel');
-    controlPanel.classList.toggle('collapsed');
-    resizeCanvas();
-}
-
-// Event listeners
+// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    const panelToggle = document.getElementById('panelToggle');
-    panelToggle.addEventListener('click', toggleControlPanel);
-    
-    window.addEventListener('resize', resizeCanvas);
-    
-    resizeCanvas();
-    
     const treatmentControlButton = document.getElementById('treatmentControl');
     if (treatmentControlButton) {
         treatmentControlButton.addEventListener('click', toggleTreatment);
@@ -1199,17 +1081,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('saveStateBtn').addEventListener('click', saveSimulationState);
-    document.getElementById('loadStateBtn').addEventListener('click', loadSimulationState);
-
     updateTechniqueInfo();
     updateInfo();
     updateMLCControlButton();
     updateClinicalTechnicalData(treatmentTechnique);
+
+    // Inițializează canvas-ul și contextul
+    const canvas = document.getElementById('simulationCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        resizeCanvas();
+        animate(); // Pornește animația
+    } else {
+        console.error('Elementul canvas nu a fost găsit.');
+    }
 });
 
-// Event listener pentru redimensionarea ferestrei
+// Funcție pentru a rezeta simularea
+function resetSimulation() {
+    isSimulating = false;
+    treatmentPaused = false;
+    isBeamOn = false;
+    currentAngle = 0;
+    accumulatedDose = 0;
+    fractionNumber = 0;
+    currentField = '-';
+    currentDoseCanvas = null;
+    doseDistributionCanvas = null;
+
+    updateUIState();
+    updateInfo();
+    drawAnatomy();
+}
+
+// Funcție pentru a ajusta dimensiunea canvas-ului
+function resizeCanvas() {
+    const canvas = document.getElementById('simulationCanvas');
+    if (canvas) {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        scaleScene();
+    }
+}
+
+// Adaugă un event listener pentru redimensionarea ferestrei
 window.addEventListener('resize', resizeCanvas);
+
+// Funcție pentru a gestiona comportamentul sticky
+function handleSticky() {
+    const simulationContainer = document.querySelector('.simulation-container');
+    const controls = document.querySelector('.controls');
+    const header = document.querySelector('.header');
+    
+    const headerHeight = header.offsetHeight;
+    const simulationHeight = simulationContainer.offsetHeight;
+    
+    simulationContainer.style.top = `${headerHeight}px`;
+    
+    if (window.innerWidth < 768) {
+        controls.style.marginTop = `${simulationHeight + headerHeight}px`;
+    } else {
+        controls.style.marginTop = '0';
+    }
+}
+
+window.addEventListener('scroll', handleSticky);
+window.addEventListener('resize', handleSticky);
+document.addEventListener('DOMContentLoaded', handleSticky);
 
 // Adăugarea unor taste rapide pentru controlul simulării
 document.addEventListener('keydown', (event) => {
@@ -1227,5 +1169,59 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// Pornirea animației
+// Funcție pentru salvarea stării simulării
+function saveSimulationState() {
+    const state = {
+        treatmentTechnique,
+        currentAngle,
+        accumulatedDose,
+        fractionNumber,
+        isSimulating,
+        isBeamOn,
+        showDoseDistribution,
+        beamEnergy,
+        beamWidth,
+        tumorShape
+    };
+    localStorage.setItem('radiotherapySimulationState', JSON.stringify(state));
+    console.log('Starea simulării a fost salvată');
+}
+
+// Funcție pentru încărcarea stării simulării
+function loadSimulationState() {
+    const savedState = localStorage.getItem('radiotherapySimulationState');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        treatmentTechnique = state.treatmentTechnique;
+        currentAngle = state.currentAngle;
+        accumulatedDose = state.accumulatedDose;
+        fractionNumber = state.fractionNumber;
+        isSimulating = state.isSimulating;
+        isBeamOn = state.isBeamOn;
+        showDoseDistribution = state.showDoseDistribution;
+        beamEnergy = state.beamEnergy;
+        beamWidth = state.beamWidth;
+        tumorShape = state.tumorShape;
+
+        updateUIState();
+        updateInfo();
+        drawAnatomy();
+        console.log('Starea simulării a fost încărcată');
+    } else {
+        console.log('Nu s-a găsit nicio stare salvată a simulării');
+    }
+}
+
+// Adăugarea butoanelor pentru salvare și încărcare în interfață
+const saveButton = document.createElement('button');
+saveButton.textContent = 'Salvează Starea';
+saveButton.addEventListener('click', saveSimulationState);
+document.body.appendChild(saveButton);
+
+const loadButton = document.createElement('button');
+loadButton.textContent = 'Încarcă Starea';
+loadButton.addEventListener('click', loadSimulationState);
+document.body.appendChild(loadButton);
+
+// Inițializarea animației
 animate();
