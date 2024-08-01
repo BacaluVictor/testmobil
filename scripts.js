@@ -668,7 +668,7 @@ function drawIsodoseLines(ctx, tumorPosition, tumorRadius, maxRadius) {
         ctx.closePath();
         ctx.stroke();
     });
-}
+  }
 
 function calculateDose(x, y, distance, technique, tumorRadius) {
     const tumorPosition = getTumorPosition();
@@ -739,23 +739,50 @@ function drawDoseDistribution() {
     ctx.drawImage(currentDoseCanvas, 0, 0);
 }
 
-function scaleScene() {
-    const sceneWidth = 800;
-    const sceneHeight = 600;
+function resizeCanvas() {
+    const canvas = document.getElementById('simulationCanvas');
+    const container = document.querySelector('.simulation-container');
+    if (canvas && container) {
+        const aspectRatio = 4/3; // Raportul de aspect al scenei originale (800x600)
+        const containerWidth = container.clientWidth;
+        let canvasWidth = containerWidth;
+        let canvasHeight = canvasWidth / aspectRatio;
+
+        // Asigurăm-ne că înălțimea canvas-ului nu depășește o anumită proporție din înălțimea viewport-ului
+        const maxHeight = window.innerHeight * 0.7; // 70% din înălțimea viewport-ului
+        if (canvasHeight > maxHeight) {
+            canvasHeight = maxHeight;
+            canvasWidth = canvasHeight * aspectRatio;
+        }
+
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = `${canvasHeight}px`;
+        canvas.width = canvasWidth * window.devicePixelRatio;
+        canvas.height = canvasHeight * window.devicePixelRatio;
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+        // Ajustăm scala scenei pentru a se potrivi noilor dimensiuni ale canvas-ului
+        scaleScene(canvasWidth, canvasHeight);
+    }
+}
+
+function scaleScene(canvasWidth, canvasHeight) {
+    const sceneWidth = 800; // Lățimea originală a scenei
+    const sceneHeight = 600; // Înălțimea originală a scenei
     
-    const scaleX = canvas.width / sceneWidth;
-    const scaleY = canvas.height / sceneHeight;
+    const scaleX = canvasWidth / sceneWidth;
+    const scaleY = canvasHeight / sceneHeight;
     const scale = Math.min(scaleX, scaleY);
 
-    const scaledWidth = sceneWidth * scale;
-    const scaledHeight = sceneHeight * scale;
-
-    const offsetX = (canvas.width - scaledWidth) / 2;
-    const offsetY = (canvas.height - scaledHeight) / 2;
-
     ctx.save();
-    ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
+
+    // Desenăm scena centrată în canvas
+    const offsetX = (canvasWidth / scale - sceneWidth) / 2;
+    const offsetY = (canvasHeight / scale - sceneHeight) / 2;
+    ctx.translate(offsetX, offsetY);
 
     drawAnatomy();
     if (showDoseDistribution) {
@@ -771,7 +798,7 @@ function scaleScene() {
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    scaleScene();
+    scaleScene(canvas.width, canvas.height);
     updateInfo();
     requestAnimationFrame(animate);
 }
@@ -1095,6 +1122,44 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error('Elementul canvas nu a fost găsit.');
     }
+
+    // Adaugă event listener pentru redimensionarea ferestrei
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        handleSticky();
+    });
+
+    // Inițializează comportamentul sticky
+    handleSticky();
+
+    // Adaugă event listener pentru taste rapide
+    document.addEventListener('keydown', (event) => {
+        switch(event.key) {
+            case ' ':
+                toggleTreatment();
+                break;
+            case 'r':
+                resetSimulation();
+                break;
+            case 'd':
+                showDoseDistribution = !showDoseDistribution;
+                if (showDoseCheckbox) {
+                    showDoseCheckbox.checked = showDoseDistribution;
+                }
+                break;
+        }
+    });
+
+    // Adaugă butoanele pentru salvare și încărcare
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Salvează Starea';
+    saveButton.addEventListener('click', saveSimulationState);
+    document.body.appendChild(saveButton);
+
+    const loadButton = document.createElement('button');
+    loadButton.textContent = 'Încarcă Starea';
+    loadButton.addEventListener('click', loadSimulationState);
+    document.body.appendChild(loadButton);
 });
 
 // Funcție pentru a rezeta simularea
@@ -1114,23 +1179,6 @@ function resetSimulation() {
     drawAnatomy();
 }
 
-// Funcție pentru a ajusta dimensiunea canvas-ului
-function resizeCanvas() {
-    const canvas = document.getElementById('simulationCanvas');
-    if (canvas) {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-        scaleScene();
-    }
-}
-
-// Adaugă un event listener pentru redimensionarea ferestrei
-window.addEventListener('resize', resizeCanvas);
-
 // Funcție pentru a gestiona comportamentul sticky
 function handleSticky() {
     const simulationContainer = document.querySelector('.simulation-container');
@@ -1138,36 +1186,16 @@ function handleSticky() {
     const header = document.querySelector('.header');
     
     const headerHeight = header.offsetHeight;
-    const simulationHeight = simulationContainer.offsetHeight;
     
-    simulationContainer.style.top = `${headerHeight}px`;
-    
-    if (window.innerWidth < 768) {
-        controls.style.marginTop = `${simulationHeight + headerHeight}px`;
-    } else {
+    if (window.innerWidth >= 768) {
+        simulationContainer.style.position = 'sticky';
+        simulationContainer.style.top = `${headerHeight}px`;
         controls.style.marginTop = '0';
+    } else {
+        simulationContainer.style.position = 'static';
+        controls.style.marginTop = '20px';
     }
 }
-
-window.addEventListener('scroll', handleSticky);
-window.addEventListener('resize', handleSticky);
-document.addEventListener('DOMContentLoaded', handleSticky);
-
-// Adăugarea unor taste rapide pentru controlul simulării
-document.addEventListener('keydown', (event) => {
-    switch(event.key) {
-        case ' ':
-            toggleTreatment();
-            break;
-        case 'r':
-            resetSimulation();
-            break;
-        case 'd':
-            showDoseDistribution = !showDoseDistribution;
-            document.getElementById('showDoseDistribution').checked = showDoseDistribution;
-            break;
-    }
-});
 
 // Funcție pentru salvarea stării simulării
 function saveSimulationState() {
@@ -1211,17 +1239,6 @@ function loadSimulationState() {
         console.log('Nu s-a găsit nicio stare salvată a simulării');
     }
 }
-
-// Adăugarea butoanelor pentru salvare și încărcare în interfață
-const saveButton = document.createElement('button');
-saveButton.textContent = 'Salvează Starea';
-saveButton.addEventListener('click', saveSimulationState);
-document.body.appendChild(saveButton);
-
-const loadButton = document.createElement('button');
-loadButton.textContent = 'Încarcă Starea';
-loadButton.addEventListener('click', loadSimulationState);
-document.body.appendChild(loadButton);
 
 // Inițializarea animației
 animate();
