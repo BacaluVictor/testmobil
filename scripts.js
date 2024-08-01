@@ -19,8 +19,6 @@ let tumorShape = 'round';
 let doseDistributionCanvas = null;
 let currentDoseCanvas = null;
 
-
-
 const structures = {
     tumor: { x: 400, y: 300, radius: 30 },
     heart: { x: 370, y: 230, radiusX: 40, radiusY: 50, angle: Math.PI / 4 },
@@ -741,51 +739,23 @@ function drawDoseDistribution() {
     ctx.drawImage(currentDoseCanvas, 0, 0);
 }
 
-function resizeCanvas() {
-    const container = document.querySelector('.simulation-container');
-    if (canvas && container) {
-        const aspectRatio = 4/3;
-        let canvasWidth, canvasHeight;
-
-        if (window.innerWidth < 768) {
-            canvasWidth = window.innerWidth;
-            canvasHeight = canvasWidth / aspectRatio;
-
-            const maxHeight = window.innerHeight * 0.7;
-            if (canvasHeight > maxHeight) {
-                canvasHeight = maxHeight;
-                canvasWidth = canvasHeight * aspectRatio;
-            }
-        } else {
-            canvasWidth = container.clientWidth;
-            canvasHeight = canvasWidth / aspectRatio;
-        }
-
-        canvas.style.width = `${canvasWidth}px`;
-        canvas.style.height = `${canvasHeight}px`;
-        canvas.width = canvasWidth * window.devicePixelRatio;
-        canvas.height = canvasHeight * window.devicePixelRatio;
-
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-        scaleScene(canvasWidth, canvasHeight);
-    }
-}
-
-function scaleScene(canvasWidth, canvasHeight) {
+function scaleScene() {
     const sceneWidth = 800;
     const sceneHeight = 600;
     
-    const scaleX = canvasWidth / sceneWidth;
-    const scaleY = canvasHeight / sceneHeight;
+    const scaleX = canvas.width / sceneWidth;
+    const scaleY = canvas.height / sceneHeight;
     const scale = Math.min(scaleX, scaleY);
 
-    ctx.save();
-    ctx.scale(scale, scale);
+    const scaledWidth = sceneWidth * scale;
+    const scaledHeight = sceneHeight * scale;
 
-    const offsetX = (canvasWidth / scale - sceneWidth) / 2;
-    const offsetY = (canvasHeight / scale - sceneHeight) / 2;
+    const offsetX = (canvas.width - scaledWidth) / 2;
+    const offsetY = (canvas.height - scaledHeight) / 2;
+
+    ctx.save();
     ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
 
     drawAnatomy();
     if (showDoseDistribution) {
@@ -801,7 +771,7 @@ function scaleScene(canvasWidth, canvasHeight) {
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    scaleScene(canvas.width, canvas.height);
+    scaleScene();
     updateInfo();
     requestAnimationFrame(animate);
 }
@@ -1074,7 +1044,6 @@ document.addEventListener('DOMContentLoaded', () => {
         beamEnergySlider.addEventListener('input', function() {
             beamEnergy = parseInt(this.value);
             document.getElementById('beamEnergyValue').textContent = `${beamEnergy} MeV`;
-            updateSimulation();
         });
     }
 
@@ -1083,7 +1052,6 @@ document.addEventListener('DOMContentLoaded', () => {
         beamWidthSlider.addEventListener('input', function() {
             beamWidth = parseInt(this.value);
             document.getElementById('beamWidthValue').textContent = `${beamWidth} mm`;
-            updateSimulation();
         });
     }
 
@@ -1117,26 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateInfo();
     updateMLCControlButton();
     updateClinicalTechnicalData(treatmentTechnique);
-
-    // Inițializează canvas-ul și contextul
-    if (canvas) {
-        resizeCanvas();
-        animate(); // Pornește animația
-    } else {
-        console.error('Elementul canvas nu a fost găsit.');
-    }
 });
-
-function updateSimulation() {
-    drawAnatomy();
-    if (showDoseDistribution) {
-        updateDoseDistribution();
-    }
-    if (isBeamOn) {
-        drawBeam(currentAngle);
-    }
-    drawGantry(currentAngle);
-}
 
 // Funcție pentru a rezeta simularea
 function resetSimulation() {
@@ -1155,30 +1104,8 @@ function resetSimulation() {
     drawAnatomy();
 }
 
-// Adaugă event listener pentru redimensionarea ferestrei
-window.addEventListener('resize', resizeCanvas);
-
-// Funcție pentru a gestiona comportamentul sticky
-function handleSticky() {
-    const simulationContainer = document.querySelector('.simulation-container');
-    const controls = document.querySelector('.controls');
-    const header = document.querySelector('.header');
-    
-    const headerHeight = header.offsetHeight;
-    
-    if (window.innerWidth >= 768) {
-        simulationContainer.style.position = 'sticky';
-        simulationContainer.style.top = `${headerHeight}px`;
-        controls.style.marginTop = '0';
-    } else {
-        simulationContainer.style.position = 'static';
-        controls.style.marginTop = '20px';
-    }
-}
-
-window.addEventListener('scroll', handleSticky);
-window.addEventListener('resize', handleSticky);
-document.addEventListener('DOMContentLoaded', handleSticky);
+// Inițializarea animației
+animate();
 
 // Adăugarea unor taste rapide pentru controlul simulării
 document.addEventListener('keydown', (event) => {
@@ -1249,73 +1176,3 @@ const loadButton = document.createElement('button');
 loadButton.textContent = 'Încarcă Starea';
 loadButton.addEventListener('click', loadSimulationState);
 document.body.appendChild(loadButton);
-
-// Inițializarea animației
-animate();
-
-// Adăugăm suport pentru zoom și pan pe dispozitive mobile
-canvas.addEventListener('touchstart', handleTouchStart);
-canvas.addEventListener('touchmove', handleTouchMove);
-canvas.addEventListener('touchend', handleTouchEnd);
-
-let currentZoom = 1;
-let panX = 0;
-let panY = 0;
-let lastX, lastY;
-let pinchStartDistance = 0;
-
-function handleTouchStart(event) {
-    if (event.touches.length === 2) {
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-        pinchStartDistance = Math.hypot(
-            touch2.clientX - touch1.clientX,
-            touch2.clientY - touch1.clientY
-        );
-    } else if (event.touches.length === 1) {
-        lastX = event.touches[0].clientX;
-        lastY = event.touches[0].clientY;
-    }
-}
-
-function handleTouchMove(event) {
-    event.preventDefault();
-    if (event.touches.length === 2) {
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-        const currentDistance = Math.hypot(
-            touch2.clientX - touch1.clientX,
-            touch2.clientY - touch1.clientY
-        );
-        
-        const zoomDelta = currentDistance / pinchStartDistance;
-        currentZoom *= zoomDelta;
-        currentZoom = Math.min(Math.max(1, currentZoom), 3); // Limităm zoom-ul între 1x și 3x
-        
-        pinchStartDistance = currentDistance;
-    } else if (event.touches.length === 1) {
-        const touch = event.touches[0];
-        panX += touch.clientX - lastX;
-        panY += touch.clientY - lastY;
-        lastX = touch.clientX;
-        lastY = touch.clientY;
-    }
-    redrawScene();
-}
-
-function handleTouchEnd() {
-    pinchStartDistance = 0;
-}
-
-canvas.addEventListener('touchstart', handleTouchStart);
-canvas.addEventListener('touchmove', handleTouchMove);
-canvas.addEventListener('touchend', handleTouchEnd);
-
-function redrawScene() {
-    ctx.save();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.translate(panX, panY);
-    ctx.scale(currentZoom, currentZoom);
-    scaleScene(canvas.width / currentZoom, canvas.height / currentZoom);
-    ctx.restore();
-}
