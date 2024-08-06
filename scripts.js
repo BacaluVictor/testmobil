@@ -18,9 +18,7 @@ let treatmentPaused = false;
 let tumorShape = 'round';
 let doseDistributionCanvas = null;
 let currentDoseCanvas = null;
-let selectedOrgan = null;
-let lastTouchX = -1;
-let lastTouchY = -1;
+let beamRelativePosition = 0;
 
 const structures = {
     tumor: { x: 400, y: 300, radius: 30 },
@@ -91,85 +89,6 @@ const treatmentTechniques = {
         treatmentTime: () => 30 + Math.random() * 30,
         mlc: { type: 'HD sau Micro', leafWidth: '2.5-5' },
         fractions: 5
-    }
-};
-
-const organsAtRisk = {
-    heart: {
-        name: 'Inimă',
-        tolerances: {
-            '2D': 'V25 < 10%',
-            '3D': 'V25 < 10%',
-            'IMRT': 'V25 < 10%',
-            'VMAT': 'V25 < 10%',
-            'SRS': 'N/A',
-            'SBRT': 'V25 < 10%'
-        },
-        path: (ctx) => {
-            ctx.beginPath();
-            ctx.ellipse(structures.heart.x, structures.heart.y, structures.heart.radiusX, structures.heart.radiusY, structures.heart.angle, 0, 2 * Math.PI);
-        }
-    },
-    leftLung: {
-        name: 'Plămân Stâng',
-        tolerances: {
-            '2D': 'V20 < 30%',
-            '3D': 'V20 < 30%',
-            'IMRT': 'V20 < 30%, Mean < 20 Gy',
-            'VMAT': 'V20 < 30%, Mean < 20 Gy',
-            'SRS': 'N/A',
-            'SBRT': 'V20 < 10%'
-        },
-        path: (ctx) => {
-            ctx.beginPath();
-            ctx.ellipse(structures.leftLung.x, structures.leftLung.y, structures.leftLung.radiusX, structures.leftLung.radiusY, 0, 0, 2 * Math.PI);
-        }
-    },
-    rightLung: {
-        name: 'Plămân Drept',
-        tolerances: {
-            '2D': 'V20 < 30%',
-            '3D': 'V20 < 30%',
-            'IMRT': 'V20 < 30%, Mean < 20 Gy',
-            'VMAT': 'V20 < 30%, Mean < 20 Gy',
-            'SRS': 'N/A',
-            'SBRT': 'V20 < 10%'
-        },
-        path: (ctx) => {
-            ctx.beginPath();
-            ctx.ellipse(structures.rightLung.x, structures.rightLung.y, structures.rightLung.radiusX, structures.rightLung.radiusY, 0, 0, 2 * Math.PI);
-        }
-    },
-    spine: {
-        name: 'Măduva Spinării',
-        tolerances: {
-            '2D': 'Max 50 Gy',
-            '3D': 'Max 50 Gy',
-            'IMRT': 'Max 45 Gy',
-            'VMAT': 'Max 45 Gy',
-            'SRS': 'Max 14 Gy la 3 fracții',
-            'SBRT': 'Max 18 Gy la 3 fracții'
-        },
-        path: (ctx) => {
-            ctx.beginPath();
-            ctx.rect(structures.spine.x - structures.spine.width / 2, structures.spine.y - structures.spine.height / 2, 
-                     structures.spine.width, structures.spine.height);
-        }
-    },
-    brain: {
-        name: 'Creier',
-        tolerances: {
-            '2D': 'N/A',
-            '3D': 'N/A',
-            'IMRT': 'N/A',
-            'VMAT': 'N/A',
-            'SRS': 'V12 < 10 cc',
-            'SBRT': 'V12 < 10 cc'
-        },
-        path: (ctx) => {
-            ctx.beginPath();
-            ctx.ellipse(400, 260, 100, 120, 0, 0, 2 * Math.PI);
-        }
     }
 };
 
@@ -273,6 +192,14 @@ function drawAnatomy() {
     } else {
         drawStandardAnatomy();
     }
+
+    const tumorPosition = getTumorPosition();
+    ctx.beginPath();
+    ctx.arc(tumorPosition.x, tumorPosition.y, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
 }
 
 function drawStandardAnatomy() {
@@ -322,6 +249,41 @@ function drawSRSAnatomy() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - 140);
+    ctx.lineTo(centerX, centerY + 100);
+    ctx.strokeStyle = '#808080';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#d0d0d0';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + 80, 50, 25, 0, Math.PI, false);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#c0c0c0';
+    ctx.beginPath();
+    ctx.moveTo(centerX - 10, centerY + 100);
+    ctx.lineTo(centerX - 10, centerY + 140);
+    ctx.lineTo(centerX + 10, centerY + 140);
+    ctx.lineTo(centerX + 10, centerY + 100);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#b0b0b0';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 20, 60 + i * 8, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 20, 60 + i * 8, 1.1 * Math.PI, 1.9 * Math.PI);
+        ctx.stroke();
+    }
+
     drawTumor(centerX, centerY - 20, structures.tumor.radius * 0.3);
 }
 
@@ -337,6 +299,26 @@ function drawSBRTAnatomy() {
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    ctx.fillStyle = '#d3d3d3';
+    ctx.beginPath();
+    ctx.rect(centerX - 10, centerY - 180, 20, 360);
+    ctx.fill();
+    ctx.strokeStyle = '#a9a9a9';
+    ctx.stroke();
+
+    ctx.strokeStyle = '#a9a9a9';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - 140 + i * 25);
+        ctx.quadraticCurveTo(centerX + 80, centerY - 130 + i * 25, centerX + 160, centerY - 120 + i * 25);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - 140 + i * 25);
+        ctx.quadraticCurveTo(centerX - 80, centerY - 130 + i * 25, centerX - 160, centerY - 120 + i * 25);
+        ctx.stroke();
+    }
+
     ctx.fillStyle = '#ffc0cb';
     ctx.beginPath();
     ctx.ellipse(centerX - 60, centerY - 50, 70, 100, 0, 0, 2 * Math.PI);
@@ -344,6 +326,16 @@ function drawSBRTAnatomy() {
     ctx.stroke();
     ctx.beginPath();
     ctx.ellipse(centerX + 60, centerY - 50, 70, 100, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ff6347';
+    ctx.beginPath();
+    ctx.moveTo(centerX - 40, centerY - 80);
+    ctx.quadraticCurveTo(centerX, centerY - 120, centerX + 40, centerY - 80);
+    ctx.quadraticCurveTo(centerX + 50, centerY - 50, centerX + 40, centerY - 20);
+    ctx.quadraticCurveTo(centerX, centerY, centerX - 40, centerY - 20);
+    ctx.quadraticCurveTo(centerX - 50, centerY - 50, centerX - 40, centerY - 80);
     ctx.fill();
     ctx.stroke();
 
@@ -426,31 +418,32 @@ function drawBeam(angle) {
     const distanceToIsocenter = Math.sqrt(dx * dx + dy * dy);
 
     let beamWidthPx = beamWidth * 0.5;
+    
+    // Modificăm calculul lungimii fasciculului
+    let beamLength = distanceToIsocenter * (1 + beamRelativePosition);
+    
+    // Limităm lungimea fasciculului pentru a nu depăși gantry-ul în direcția opusă
+    beamLength = Math.min(beamLength, distanceToIsocenter * 2);
 
+    console.log(`Energie: ${beamEnergy}, beamRelativePosition: ${beamRelativePosition}, beamLength: ${beamLength}`);
+
+    // Desenăm fasciculul folosind beamLength
     switch (treatmentTechnique) {
         case '2D':
-            drawRectangularBeam(0, 0, beamWidthPx, distanceToIsocenter, techParams.precision);
+            drawRectangularBeam(0, -distanceToIsocenter, beamWidthPx, beamLength, techParams.precision);
             break;
         case '3D':
-            drawConformalBeam(0, 0, beamWidthPx, distanceToIsocenter, techParams.precision);
+            drawConformalBeam(0, -distanceToIsocenter, beamWidthPx, beamLength, techParams.precision);
             break;
         case 'IMRT':
         case 'VMAT':
-            drawIMRTBeam(0, 0, beamWidthPx, distanceToIsocenter, techParams.precision);
+            drawIMRTBeam(0, -distanceToIsocenter, beamWidthPx, beamLength, techParams.precision);
             break;
         case 'SRS':
         case 'SBRT':
-            drawSRSBeam(0, 0, beamWidthPx, distanceToIsocenter, techParams.precision);
+            drawSRSBeam(0, -distanceToIsocenter, beamWidthPx, beamLength, techParams.precision);
             break;
     }
-
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, -distanceToIsocenter);
-    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-    ctx.stroke();
-    ctx.setLineDash([]);
 
     ctx.restore();
 }
@@ -471,11 +464,11 @@ function drawRectangularBeam(originX, originY, width, length, precision) {
     ctx.beginPath();
     ctx.moveTo(originX - width - edgeVariation, originY);
     ctx.lineTo(originX + width + edgeVariation, originY);
-    ctx.lineTo(originX + width - edgeVariation, -length);
-    ctx.lineTo(originX - width + edgeVariation, -length);
+    ctx.lineTo(originX + width - edgeVariation, originY + length);
+    ctx.lineTo(originX - width + edgeVariation, originY + length);
     ctx.closePath();
 
-    const gradient = ctx.createLinearGradient(originX, originY, originX, -length);
+    const gradient = ctx.createLinearGradient(originX, originY, originX, originY + length);
     gradient.addColorStop(0, getYellowShade(beamEnergy / 15));
     gradient.addColorStop(1, getYellowShade(0.05));
     ctx.fillStyle = gradient;
@@ -492,12 +485,12 @@ function drawConformalBeam(originX, originY, width, length, precision) {
     ctx.beginPath();
     ctx.moveTo(originX - width - edgeVariation, originY);
     ctx.lineTo(originX + width + edgeVariation, originY);
-    ctx.quadraticCurveTo(originX + width / 2, -length / 2, originX + width - edgeVariation, -length);
-    ctx.lineTo(originX - width + edgeVariation, -length);
-    ctx.quadraticCurveTo(originX - width / 2, -length / 2, originX - width - edgeVariation, originY);
+    ctx.quadraticCurveTo(originX + width / 2, originY + length / 2, originX + width - edgeVariation, originY + length);
+    ctx.lineTo(originX - width + edgeVariation, originY + length);
+    ctx.quadraticCurveTo(originX - width / 2, originY + length / 2, originX - width - edgeVariation, originY);
     ctx.closePath();
 
-    const gradient = ctx.createLinearGradient(originX, originY, originX, -length);
+    const gradient = ctx.createLinearGradient(originX, originY, originX, originY + length);
     gradient.addColorStop(0, getYellowShade(beamEnergy / 15, 10));
     gradient.addColorStop(1, getYellowShade(0.05, 10));
     ctx.fillStyle = gradient;
@@ -515,13 +508,13 @@ function drawIMRTBeam(originX, originY, width, length, precision) {
         const segmentWidth = width * (0.5 + Math.random() * 0.5);
         const intensity = Math.random() * 0.7 + 0.3;
         
-        const gradient = ctx.createLinearGradient(originX, originY - i * segmentLength, originX, originY - (i + 1) * segmentLength);
+        const gradient = ctx.createLinearGradient(originX, originY + i * segmentLength, originX, originY + (i + 1) * segmentLength);
         gradient.addColorStop(0, getYellowShade(intensity * beamEnergy / 15, 20));
         gradient.addColorStop(1, getYellowShade(intensity * 0.05, 20));
         ctx.fillStyle = gradient;
 
         ctx.beginPath();
-        ctx.rect(originX - segmentWidth / 2, originY - (i + 1) * segmentLength, segmentWidth, segmentLength);
+        ctx.rect(originX - segmentWidth / 2, originY + i * segmentLength, segmentWidth, segmentLength);
         ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.stroke();
@@ -535,11 +528,11 @@ function drawSRSBeam(originX, originY, width, length, precision) {
     ctx.beginPath();
     ctx.moveTo(originX - maxWidth, originY);
     ctx.lineTo(originX + maxWidth, originY);
-    ctx.lineTo(originX + tumorRadius, -length);
-    ctx.lineTo(originX - tumorRadius, -length);
+    ctx.lineTo(originX + tumorRadius, originY + length);
+    ctx.lineTo(originX - tumorRadius, originY + length);
     ctx.closePath();
 
-    const gradient = ctx.createLinearGradient(originX, originY, originX, -length);
+    const gradient = ctx.createLinearGradient(originX, originY, originX, originY + length);
     gradient.addColorStop(0, getYellowShade(beamEnergy / 15, -10));
     gradient.addColorStop(1, getYellowShade(0.9, -10));
     ctx.fillStyle = gradient;
@@ -551,7 +544,7 @@ function drawSRSBeam(originX, originY, width, length, precision) {
     for (let i = -5; i <= 5; i++) {
         const leafPosition = i * (maxWidth / 5);
         ctx.moveTo(originX + leafPosition, originY);
-        ctx.lineTo(originX + (leafPosition / maxWidth) * tumorRadius, -length);
+        ctx.lineTo(originX + (leafPosition / maxWidth) * tumorRadius, originY + length);
     }
     ctx.stroke();
 }
@@ -778,91 +771,11 @@ function scaleScene() {
     ctx.restore();
 }
 
-function animate(mouseX, mouseY) {
+function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     scaleScene();
-    
-    let organHighlighted = false;
-    for (const [key, organ] of Object.entries(organsAtRisk)) {
-        if (isMouseOverOrgan(mouseX, mouseY, organ) || organ === selectedOrgan) {
-            highlightOrgan(organ);
-            showOrganTolerance(organ, mouseX, mouseY);
-            organHighlighted = true;
-            break;
-        }
-    }
-    
     updateInfo();
-    requestAnimationFrame(() => animate(mouseX, mouseY));
-}
-
-function isMouseOverOrgan(mouseX, mouseY, organ) {
-    ctx.save();
-    organ.path(ctx);
-    const isOver = ctx.isPointInPath(mouseX, mouseY);
-    ctx.restore();
-    return isOver;
-}
-
-function highlightOrgan(organ) {
-    ctx.save();
-    ctx.globalAlpha = 0.2;
-    ctx.fillStyle = '#FFD700';
-    organ.path(ctx);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 2;
-    organ.path(ctx);
-    ctx.stroke();
-    ctx.restore();
-}
-
-function showOrganTolerance(organ, x, y) {
-    const tolerance = organ.tolerances[treatmentTechnique];
-    ctx.save();
-    
-    ctx.font = '14px Arial';
-    const text = `${organ.name}: ${tolerance}`;
-    const textWidth = ctx.measureText(text).width;
-    const padding = 5;
-    const boxWidth = textWidth + padding * 2;
-    const boxHeight = 25;
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(x, y - boxHeight, boxWidth, boxHeight);
-
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y - boxHeight, boxWidth, boxHeight);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(text, x + padding, y - 6);
-
-    ctx.restore();
-}
-
-function handleInteraction(x, y, isClick = false) {
-    let organInteracted = false;
-    for (const [key, organ] of Object.entries(organsAtRisk)) {
-        if (isMouseOverOrgan(x, y, organ)) {
-            if (isClick) {
-                selectedOrgan = (selectedOrgan === organ) ? null : organ;
-            } else {
-                selectedOrgan = organ;
-            }
-            organInteracted = true;
-            break;
-        }
-    }
-    
-    if (!organInteracted && isClick) {
-        selectedOrgan = null;
-    }
-    
-    animate(x, y);
+    requestAnimationFrame(animate);
 }
 
 function toggleTreatment() {
@@ -1114,6 +1027,17 @@ function toggleInfo(header) {
     }
 }
 
+function updateBeamRelativePosition() {
+    const minEnergy = 1;
+    const maxEnergy = 15;
+    
+    // Ajustăm scala pentru a permite o variație mai mare
+    // Acum, -0.5 va reprezenta fasciculul cel mai scurt, 0 va fi la izocentru, și 0.5 va fi cel mai lung
+    beamRelativePosition = (beamEnergy - minEnergy) / (maxEnergy - minEnergy) - 0.5;
+
+    console.log(`Energie actualizată: ${beamEnergy}, beamRelativePosition: ${beamRelativePosition}`);
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     const treatmentControlButton = document.getElementById('treatmentControl');
@@ -1133,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
         beamEnergySlider.addEventListener('input', function() {
             beamEnergy = parseInt(this.value);
             document.getElementById('beamEnergyValue').textContent = `${beamEnergy} MeV`;
+            updateBeamRelativePosition();
         });
     }
 
@@ -1170,47 +1095,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    canvas.addEventListener('mousemove', (event) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-        handleInteraction(mouseX, mouseY);
-    });
-
-    canvas.addEventListener('click', (event) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-        handleInteraction(mouseX, mouseY, true);
-    });
-
-    canvas.addEventListener('touchstart', (event) => {
-        event.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const touch = event.touches[0];
-        lastTouchX = touch.clientX - rect.left;
-        lastTouchY = touch.clientY - rect.top;
-        handleInteraction(lastTouchX, lastTouchY, true);
-    });
-
-    canvas.addEventListener('touchmove', (event) => {
-        event.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const touch = event.touches[0];
-        lastTouchX = touch.clientX - rect.left;
-        lastTouchY = touch.clientY - rect.top;
-        handleInteraction(lastTouchX, lastTouchY);
-    });
-
-    canvas.addEventListener('touchend', (event) => {
-        event.preventDefault();
-        handleInteraction(lastTouchX, lastTouchY, true);
-    });
-
     updateTechniqueInfo();
     updateInfo();
     updateMLCControlButton();
     updateClinicalTechnicalData(treatmentTechnique);
+    updateBeamRelativePosition();
 });
 
 // Funcție pentru a rezeta simularea
@@ -1231,7 +1120,7 @@ function resetSimulation() {
 }
 
 // Inițializarea animației
-animate(-1, -1);
+animate();
 
 // Adăugarea unor taste rapide pentru controlul simulării
 document.addEventListener('keydown', (event) => {
@@ -1301,4 +1190,4 @@ document.body.appendChild(saveButton);
 const loadButton = document.createElement('button');
 loadButton.textContent = 'Încarcă Starea';
 loadButton.addEventListener('click', loadSimulationState);
-document.body.appendChild(loadButton);
+document.body.appendChild(loadButton); 
